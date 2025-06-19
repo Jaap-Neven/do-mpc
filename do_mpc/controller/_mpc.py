@@ -1010,7 +1010,7 @@ class MPC(do_mpc.optimizer.Optimizer, do_mpc.model.IteratedVariables):
         self.opt_p_num['_p'] = p0['_p']
 
         # Overwrite the time-varying soft constraint bounds manually
-        if self.model.use_case == 'bestest_hydronic_HP':
+        if self.use_case == 'bestest_hydronic_HP':
             n_x = x0.shape[0]
             n_coll_tot = self.settings.collocation_ni * (1 + self.settings.collocation_deg) * n_x
             # print(self.nlp_cons_ub)
@@ -1019,7 +1019,7 @@ class MPC(do_mpc.optimizer.Optimizer, do_mpc.model.IteratedVariables):
                 self.nlp_cons_ub[2 * n_x + n_coll_tot + i * (n_x + n_coll_tot + 2)] = self.opt_p_num['_tvp', i, 'Thigh']
                 self.nlp_cons_ub[1 + 2 * n_x + n_coll_tot + i * (n_x + n_coll_tot + 2)] = -self.opt_p_num['_tvp', i, 'Tlow']
 
-        elif self.model.use_case == 'twozone_hydronic':
+        elif self.use_case == 'twozone_hydronic':
             n_x = x0.shape[0]
             n_coll_tot = self.settings.collocation_ni * (1 + self.settings.collocation_deg) * n_x
             # print(self.nlp_cons_ub)
