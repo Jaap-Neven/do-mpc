@@ -568,7 +568,7 @@ class Optimizer:
         for slack_i in self.slack_vars_list:
             self._eps_ub[slack_i['slack_name']] = slack_i['ub']
             self._nl_cons[slack_i['slack_name']] -= self._eps[slack_i['slack_name']]
-            self.slack_cost += castools.sum1(slack_i['penalty']*self._eps[slack_i['slack_name']])
+            self.slack_cost += castools.sum1(slack_i['penalty']*self._eps[slack_i['slack_name']]**2)
 
         # Objective function epsilon contribution:
         self.epsterm_fun = castools.Function('epsterm', [_eps], [self.slack_cost])
