@@ -1037,6 +1037,19 @@ class MPC(do_mpc.optimizer.Optimizer, do_mpc.model.IteratedVariables):
                 self.nlp_cons_ub[2 + 2 * n_x + n_coll_tot + i * (n_x + n_coll_tot + 4)] = -self.opt_p_num['_tvp', i, 'Tlow']
                 self.nlp_cons_ub[3 + 2 * n_x + n_coll_tot + i * (n_x + n_coll_tot + 4)] = -self.opt_p_num['_tvp', i, 'Tlow']
 
+        elif self.use_case == 'multizone_residential_hydronic':
+            n_x = x0.shape[0]
+            n_coll_tot = self.settings.collocation_ni * (1 + self.settings.collocation_deg) * n_x
+            #print(self.nlp_cons_ub)
+
+            for i in range(self.settings.n_horizon):
+                self.nlp_cons_ub[25 + 0 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
+                self.nlp_cons_ub[25 + 2 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
+                self.nlp_cons_ub[25 + 4 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
+                self.nlp_cons_ub[25 + 6 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
+                self.nlp_cons_ub[25 + 8 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
+                self.nlp_cons_ub[25 + 10 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
+
         else:
             raise Exception('The model use case {} is not configured to have time-varying soft constraints yet.'.format(self.model.use_case))
 
