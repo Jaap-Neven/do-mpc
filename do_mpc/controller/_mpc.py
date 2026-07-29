@@ -1043,8 +1043,12 @@ class MPC(do_mpc.optimizer.Optimizer, do_mpc.model.IteratedVariables):
             #print(self.nlp_cons_ub)
 
             if 'Tz_avg' in self.model._x.keys():
-                for i in range(self.settings.n_horizon):
-                    self.nlp_cons_ub[1 + 2*n_coll_tot + i*(2*n_coll_tot)] = -self.opt_p_num['_tvp', i, 'Tlow']
+                i = 0
+                vals = np.array(self.nlp_cons_ub).flatten()
+                for idx, val in enumerate(vals):
+                    if val == 999.:
+                        self.nlp_cons_ub[idx] = -self.opt_p_num['_tvp', i, 'Tlow']
+                        i += 1
             else:
                 for i in range(self.settings.n_horizon):
                     self.nlp_cons_ub[25 + 0 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
