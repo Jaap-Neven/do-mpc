@@ -1042,13 +1042,17 @@ class MPC(do_mpc.optimizer.Optimizer, do_mpc.model.IteratedVariables):
             n_coll_tot = self.settings.collocation_ni * (1 + self.settings.collocation_deg) * n_x
             #print(self.nlp_cons_ub)
 
-            for i in range(self.settings.n_horizon):
-                self.nlp_cons_ub[25 + 0 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
-                self.nlp_cons_ub[25 + 2 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
-                self.nlp_cons_ub[25 + 4 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
-                self.nlp_cons_ub[25 + 6 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
-                self.nlp_cons_ub[25 + 8 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
-                self.nlp_cons_ub[25 + 10 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
+            if 'Tz_avg' in self.model._x.keys():
+                for i in range(self.settings.n_horizon):
+                    self.nlp_cons_ub[1 + 2*n_coll_tot + i*(2*n_coll_tot)] = -self.opt_p_num['_tvp', i, 'Tlow']
+            else:
+                for i in range(self.settings.n_horizon):
+                    self.nlp_cons_ub[25 + 0 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
+                    self.nlp_cons_ub[25 + 2 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
+                    self.nlp_cons_ub[25 + 4 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
+                    self.nlp_cons_ub[25 + 6 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
+                    self.nlp_cons_ub[25 + 8 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
+                    self.nlp_cons_ub[25 + 10 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
 
         else:
             raise Exception('The model use case {} is not configured to have time-varying soft constraints yet.'.format(self.model.use_case))
