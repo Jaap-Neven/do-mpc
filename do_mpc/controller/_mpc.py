@@ -1038,26 +1038,18 @@ class MPC(do_mpc.optimizer.Optimizer, do_mpc.model.IteratedVariables):
                 self.nlp_cons_ub[3 + 2 * n_x + n_coll_tot + i * (n_x + n_coll_tot + 4)] = -self.opt_p_num['_tvp', i, 'Tlow']
 
         elif self.use_case == 'multizone_residential_hydronic':
-            n_x = x0.shape[0]
-            n_coll_tot = self.settings.collocation_ni * (1 + self.settings.collocation_deg) * n_x
-            #print(self.nlp_cons_ub)
-
-            if 'Tz_avg' in self.model._x.keys():
-                i = 0
+            # Cache the positions of the 999 sentinel values on the first call.
+            # After the first call the 999s are overwritten with actual T_low values,
+            # so scanning for 999 on subsequent calls would find nothing.
+            if not hasattr(self, '_soft_cons_indices'):
                 vals = np.array(self.nlp_cons_ub).flatten()
-                for idx, val in enumerate(vals):
-                    if val == 999.:
-                        self.nlp_cons_ub[idx] = -self.opt_p_num['_tvp', i, 'Tlow']
-                        i += 1
-            else:
-                for i in range(self.settings.n_horizon):
-                    self.nlp_cons_ub[25 + 0 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
-                    self.nlp_cons_ub[25 + 2 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
-                    self.nlp_cons_ub[25 + 4 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
-                    self.nlp_cons_ub[25 + 6 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
-                    self.nlp_cons_ub[25 + 8 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
-                    self.nlp_cons_ub[25 + 10 + i * (n_x + n_coll_tot + 12)] = -self.opt_p_num['_tvp', i, 'Tlow']
+                self._soft_cons_indices = np.where(vals == 999)[0]
+                n_total = len(self._soft_cons_indices)
+                self._soft_cons_n_per_step = max(1, n_total // self.settings.n_horizon)
 
+            for j, idx in enumerate(self._soft_cons_indices):
+                tvp_i = j // self._soft_cons_n_per_step
+                self.nlp_cons_ub[idx] = -self.opt_p_num['_tvp', tvp_i, 'Tlow']
         else:
             raise Exception('The model use case {} is not configured to have time-varying soft constraints yet.'.format(self.model.use_case))
 
