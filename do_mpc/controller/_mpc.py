@@ -1019,23 +1019,38 @@ class MPC(do_mpc.optimizer.Optimizer, do_mpc.model.IteratedVariables):
         self.opt_p_num['_p'] = p0['_p']
 
         # Overwrite the time-varying soft constraint bounds manually
-        if self.use_case == 'bestest_hydronic_HP':
-            n_x = x0.shape[0]
-            n_coll_tot = self.settings.collocation_ni * (1 + self.settings.collocation_deg) * n_x
-            # print(self.nlp_cons_ub)
+        # Guard: only run use-case-specific soft-constraint updates when a recognised
+        # use_case is set on the MPC object (avoids crashes for generic/test controllers).
+        if not hasattr(self, 'use_case') or not self.use_case:
+            pass
+        elif self.use_case == 'bestest_hydronic_HP':
+            # Scan for sentinel 999 positions once and cache them.
+            # Two soft constraints per horizon step: the first marks Thigh (upper bound),
+            # the second marks -Tlow (lower bound, negated for ub form).
+            if not hasattr(self, '_soft_cons_indices'):
+                vals = np.array(self.nlp_cons_ub).flatten()
+                self._soft_cons_indices = np.where(vals == 999)[0]
+                self._soft_cons_n_per_step = max(1, len(self._soft_cons_indices) // self.settings.n_horizon)
 
-            for i in range(self.settings.n_horizon):
-                self.nlp_cons_ub[2 * n_x + n_coll_tot + i * (n_x + n_coll_tot + 2)] = self.opt_p_num['_tvp', i, 'Thigh']
-                self.nlp_cons_ub[1 + 2 * n_x + n_coll_tot + i * (n_x + n_coll_tot + 2)] = -self.opt_p_num['_tvp', i, 'Tlow']
+            for j, idx in enumerate(self._soft_cons_indices):
+                tvp_i   = j // self._soft_cons_n_per_step   # horizon step index
+                cons_i  = j  % self._soft_cons_n_per_step   # which constraint within that step
+                if cons_i == 0:
+                    self.nlp_cons_ub[idx] =  self.opt_p_num['_tvp', tvp_i, 'Thigh']
+                else:
+                    self.nlp_cons_ub[idx] = -self.opt_p_num['_tvp', tvp_i, 'Tlow']
 
         elif self.use_case == 'twozone_hydronic':
-            n_x = x0.shape[0]
-            n_coll_tot = self.settings.collocation_ni * (1 + self.settings.collocation_deg) * n_x
-            # print(self.nlp_cons_ub)
+            # Scan for sentinel 999 positions once and cache them.
+            # All soft constraint slots for this use case use the same -Tlow bound.
+            if not hasattr(self, '_soft_cons_indices'):
+                vals = np.array(self.nlp_cons_ub).flatten()
+                self._soft_cons_indices = np.where(vals == 999)[0]
+                self._soft_cons_n_per_step = max(1, len(self._soft_cons_indices) // self.settings.n_horizon)
 
-            for i in range(self.settings.n_horizon):
-                self.nlp_cons_ub[2 + 2 * n_x + n_coll_tot + i * (n_x + n_coll_tot + 4)] = -self.opt_p_num['_tvp', i, 'Tlow']
-                self.nlp_cons_ub[3 + 2 * n_x + n_coll_tot + i * (n_x + n_coll_tot + 4)] = -self.opt_p_num['_tvp', i, 'Tlow']
+            for j, idx in enumerate(self._soft_cons_indices):
+                tvp_i = j // self._soft_cons_n_per_step
+                self.nlp_cons_ub[idx] = -self.opt_p_num['_tvp', tvp_i, 'Tlow']
 
         elif self.use_case == 'multizone_residential_hydronic':
             # Cache the positions of the 999 sentinel values on the first call.
